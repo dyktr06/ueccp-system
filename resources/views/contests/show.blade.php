@@ -23,29 +23,34 @@
                     </a></td>
                 </div>
             </div>
-            <table class="table table-striped mb-4">
-                <thead>
-                    <tr>
-                        <th>問題</th>
-                        <th>URL</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($contest->problems as $problem)
-                        @php
-                            $problem_id = $problem['id'];
-                            $contest_id = explode('_', $problem_id)[0];
-                        @endphp
+            @if (!empty($contest->problems))
+                <h2 class="h5">
+                    問題一覧
+                </h2>
+                <table class="table table-striped mb-4">
+                    <thead>
                         <tr>
-                            <td>{{ $problem_id }}</td>
-                            <td><a class="text-decoration-none"
-                                    href="{{ "https://atcoder.jp/contests/{$contest_id}/tasks/{$problem_id}" }}">
-                                    問題URL
-                                </a></td>
+                            <th>問題</th>
+                            <th>URL</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach ($contest->problems as $problem)
+                            @php
+                                $problem_id = $problem['id'];
+                                $contest_id = explode('_', $problem_id)[0];
+                            @endphp
+                            <tr>
+                                <td>{{ $problem_id }}</td>
+                                <td><a class="text-decoration-none"
+                                        href="{{ "https://atcoder.jp/contests/{$contest_id}/tasks/{$problem_id}" }}">
+                                        問題URL
+                                    </a></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
             @if (!empty($contest->standings))
                 <h2 class="h5">
                     順位表

@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 
 class ContestsController extends Controller
 {
+    const INTERVAL = 60 * 10;
+
     private function file_get_contents_by_curl(string $url)
     {
         $curl_p = curl_init();
@@ -56,13 +58,19 @@ class ContestsController extends Controller
         $url = "https://kenkoooo.com/atcoder/internal-api/contest/get/" . $request->input("contest_id");
         $contents = $this->file_get_contents_by_curl($url);
         if (!$contents) {
-            return view('contests.index');
+            abort(500);
         }
         $contents = mb_convert_encoding($contents, 'UTF8', 'ASCII,JIS,UTF-8,EUC-JP,SJIS-WIN');
         $json = json_decode($contents, true);
-
+        if(empty($json)){
+            abort(500);
+        }
         $params['info'] = $json["info"];
-        $params['problems'] = $json["problems"];
+        if(time() > $json["info"]["start_epoch_second"]){
+            $params['problems'] = $json["problems"];
+        }else{
+            $params['problems'] = [];
+        }
         $params['participants'] = $json["participants"];
         $params['standings'] = [];
 
@@ -104,6 +112,9 @@ class ContestsController extends Controller
         }
         $contents = mb_convert_encoding($contents, 'UTF8', 'ASCII,JIS,UTF-8,EUC-JP,SJIS-WIN');
         $json = json_decode($contents, true);
+        if(empty($json)){
+            return [];
+        }
 
         $contest_result = [];
         foreach($contest["participants"] as $user_id){
@@ -157,15 +168,26 @@ class ContestsController extends Controller
         $url = "https://kenkoooo.com/atcoder/internal-api/contest/get/" . $request->input("contest_id");
         $contents = $this->file_get_contents_by_curl($url);
         if (!$contents) {
-            return view('contests.index');
+            abort(500);
         }
         $contents = mb_convert_encoding($contents, 'UTF8', 'ASCII,JIS,UTF-8,EUC-JP,SJIS-WIN');
         $json = json_decode($contents, true);
+        if(empty($json)){
+            abort(500);
+        }
 
         $params['info'] = $json["info"];
-        $params['problems'] = $json["problems"];
+        if(time() > $json["info"]["start_epoch_second"]){
+            $params['problems'] = $json["problems"];
+        }else{
+            $params['problems'] = [];
+        }
         $params['participants'] = $json["participants"];
-        $params['standings'] = $this->calc_standings($json);
+        if(time() > $json["info"]["start_epoch_second"] + $json["info"]["duration_second"] + self::INTERVAL){
+            $params['standings'] = $this->calc_standings($json);
+        }else{
+            $params['standings'] = [];
+        }
 
         $contest->fill($params)->save();
 
