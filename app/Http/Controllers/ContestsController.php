@@ -2,25 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ContestRequest;
 use App\Models\Contest;
-use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ContestsController extends Controller
 {
-    const INTERVAL = 60 * 10;
-
-    private function file_get_contents_by_curl(string $url)
-    {
-        $curl_p = curl_init();
-        curl_setopt($curl_p, CURLOPT_URL, $url);
-        curl_setopt($curl_p, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl_p, CURLOPT_ENCODING, "gzip");
-        $data = curl_exec($curl_p);
-        curl_close($curl_p);
-        return $data;
-    }
 
     private function isAccessible()
     {
@@ -49,33 +38,10 @@ class ContestsController extends Controller
         return view('contests.create');
     }
 
-    public function store(Request $request)
+    public function store(ContestRequest $request)
     {
-        $params = $request->validate([
-            'contest_id' => 'required|max:50',
-        ]);
-
-        $url = "https://kenkoooo.com/atcoder/internal-api/contest/get/" . $request->input("contest_id");
-        $contents = $this->file_get_contents_by_curl($url);
-        if (!$contents) {
-            abort(500);
-        }
-        $contents = mb_convert_encoding($contents, 'UTF8', 'ASCII,JIS,UTF-8,EUC-JP,SJIS-WIN');
-        $json = json_decode($contents, true);
-        if(empty($json)){
-            abort(500);
-        }
-        $params['info'] = $json["info"];
-        if(time() > $json["info"]["start_epoch_second"]){
-            $params['problems'] = $json["problems"];
-        }else{
-            $params['problems'] = [];
-        }
-        $params['participants'] = $json["participants"];
-        $params['standings'] = [];
-
+        $params = Contest::updateContest($request);
         Contest::create($params);
-
         return redirect()->route('top');
     }
 
@@ -88,107 +54,13 @@ class ContestsController extends Controller
         ]);
     }
 
-    function compareResult($resultA, $resultB){
-        if($resultA["points"] === $resultB["points"]){
-            return $resultA["penalty"] - $resultB["penalty"];
-        }else{
-            return $resultB["points"] - $resultA["points"];
-        }
-    }
-
-    public function calc_standings($contest){
-        $problems_id = [];
-        foreach($contest["problems"] as $problem){
-            $problems_id[] = $problem["id"];
-        }
-        $problems = implode(",", $problems_id);
-        $users = implode(",", $contest["participants"]);
-        $time_from = $contest["info"]["start_epoch_second"];
-        $time_to = $contest["info"]["start_epoch_second"] + $contest["info"]["duration_second"];
-        $url = "https://kenkoooo.com/atcoder/atcoder-api/v3/users_and_time?users={$users}&problems={$problems}&from={$time_from}&to={$time_to}";
-        $contents = $this->file_get_contents_by_curl($url);
-        if (!$contents) {
-            return [];
-        }
-        $contents = mb_convert_encoding($contents, 'UTF8', 'ASCII,JIS,UTF-8,EUC-JP,SJIS-WIN');
-        $json = json_decode($contents, true);
-        if(empty($json)){
-            return [];
-        }
-
-        $contest_result = [];
-        foreach($contest["participants"] as $user_id){
-            $contest_result[$user_id] = [
-                "points" => 0,
-                "penalty" => 0,
-                "last_submission_time" => $time_from,
-                "solved" => [],
-                "penalty_per_problem" => [],
-            ];
-        }
-
-        foreach ($json as $submission) {
-            $user_id = $submission["user_id"];
-            if(isset($contest_result[$user_id]["solved"][$submission["problem_id"]])){
-                continue;
-            }
-            if($submission["result"] === "AC"){
-                $contest_result[$user_id]["points"] += $submission["point"];
-                $contest_result[$user_id]["penalty"] += $contest_result[$user_id]["penalty_per_problem"][$submission["problem_id"]] ?? 0;
-                $contest_result[$user_id]["last_submission_time"] = $submission["epoch_second"];
-                $contest_result[$user_id]["solved"][$submission["problem_id"]] = true;
-            }else{
-                $contest_result[$user_id]["penalty_per_problem"][$submission["problem_id"]] = ($contest_result[$user_id]["penalty_per_problem"][$submission["problem_id"]] ?? 0) + 1;
-            }
-        }
-
-        $standings = [];
-        foreach($contest_result as $user_id => $result){
-            $standings[] = [
-                "user_id" => $user_id,
-                "points" => $result["points"],
-                "penalty" => $result["penalty"] * $contest["info"]["penalty_second"] + $result["last_submission_time"] - $time_from,
-            ];
-        }
-        usort($standings, array($this, "compareResult"));
-        return $standings;
-    }
-
-    public function update($id, Request $request)
+    public function update($id, ContestRequest $request)
     {
-        $params = $request->validate([
-            'contest_id' => 'required|max:50',
-        ]);
-
+        $params = Contest::updateContest($request);
+        if (!$params) {
+            abort(500);
+        }
         $contest = Contest::findOrFail($id);
-        if (!$this->isAccessible()) {
-            abort(404);
-        }
-
-        $url = "https://kenkoooo.com/atcoder/internal-api/contest/get/" . $request->input("contest_id");
-        $contents = $this->file_get_contents_by_curl($url);
-        if (!$contents) {
-            abort(500);
-        }
-        $contents = mb_convert_encoding($contents, 'UTF8', 'ASCII,JIS,UTF-8,EUC-JP,SJIS-WIN');
-        $json = json_decode($contents, true);
-        if(empty($json)){
-            abort(500);
-        }
-
-        $params['info'] = $json["info"];
-        if(time() > $json["info"]["start_epoch_second"]){
-            $params['problems'] = $json["problems"];
-        }else{
-            $params['problems'] = [];
-        }
-        $params['participants'] = $json["participants"];
-        if(time() > $json["info"]["start_epoch_second"] + $json["info"]["duration_second"] + self::INTERVAL){
-            $params['standings'] = $this->calc_standings($json);
-        }else{
-            $params['standings'] = [];
-        }
-
         $contest->fill($params)->save();
 
         return redirect()->route('contests.show', ['contest' => $contest]);
@@ -196,10 +68,14 @@ class ContestsController extends Controller
 
     public function destroy($id)
     {
-        $contest = Contest::findOrFail($id);
         if (!$this->isAccessible()) {
             abort(404);
         }
+
+        $contest = Contest::findOrFail($id);
+        DB::transaction(function () use ($contest) {
+            $contest->delete();
+        });
 
         return redirect()->route('top');
     }
