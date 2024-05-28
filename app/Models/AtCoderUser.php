@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class AtCoderUser extends Model
 {
@@ -13,7 +12,7 @@ class AtCoderUser extends Model
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password',
+        'user_id',
     ];
 
     public function post()
