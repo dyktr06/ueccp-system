@@ -67,9 +67,10 @@
                         @foreach ($contest->standings as $key => $standing)
                             <tr>
                                 <td>{{ $key + 1 }}</td>
-                                <td><a class="text-decoration-none" href="{{ route('users.show', ['user_id' => $standing['user_id']]) }}">
-                                    {{ $standing['user_id'] }}
-                                </a></td>
+                                <td><a class="text-decoration-none"
+                                        href="{{ route('users.show', ['user_id' => $standing['user_id']]) }}">
+                                        {{ $standing['user_id'] }}
+                                    </a></td>
                                 <td>{{ $standing['points'] }}</td>
                             </tr>
                         @endforeach
@@ -110,7 +111,7 @@
                             @csrf
                             @method('DELETE')
 
-                            <button class="btn btn-danger">削除する</button>
+                            <button class="btn btn-danger" onclick='return confirm("コンテストを削除しますか？")'>削除する</button>
                         </form>
                     </div>
                 @endif
