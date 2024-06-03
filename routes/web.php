@@ -17,8 +17,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', 'App\Http\Controllers\ContestsController@index')->name('top');
 
 Route::resource('contests', 'App\Http\Controllers\ContestsController', ['only' => ['create', 'store', 'show', 'update', 'destroy']]);
-// Route::resource('users', 'App\Http\Controllers\AtCoderUsersController', ['only' => ['index', 'store', 'show']]);
+
 Route::get('users/{user_id}', 'App\Http\Controllers\AtCoderUsersController@show')->name('users.show');
+
+Route::get('ranking', 'App\Http\Controllers\RankingController@show')->name('ranking.show');
 
 // GitHub の認証後に戻るためのルーティング
 Route::get('social-auth/{provider}/callback', 'App\Http\Controllers\Auth\SocialLoginController@providerCallback');

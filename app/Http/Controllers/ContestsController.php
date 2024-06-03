@@ -5,11 +5,17 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ContestRequest;
 use App\Models\Contest;
 use App\Models\User;
+use App\Services\UpdateContestService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ContestsController extends Controller
 {
+    private $updateContestService;
+    public function __construct()
+    {
+        $this->updateContestService = new UpdateContestService();
+    }
 
     private function isAccessible()
     {
@@ -25,7 +31,7 @@ class ContestsController extends Controller
 
     public function index()
     {
-        $contests = Contest::orderBy('created_at', 'desc')->paginate(10);
+        $contests = Contest::orderBy('info->start_epoch_second', 'desc')->paginate(10);
 
         return view('contests.index', ['contests' => $contests]);
     }
@@ -40,7 +46,7 @@ class ContestsController extends Controller
 
     public function store(ContestRequest $request)
     {
-        $params = Contest::updateContest($request);
+        $params = $this->updateContestService->updateContest($request);
         Contest::create($params);
         return redirect()->route('top');
     }
@@ -56,7 +62,7 @@ class ContestsController extends Controller
 
     public function update($id, ContestRequest $request)
     {
-        $params = Contest::updateContest($request);
+        $params = $this->updateContestService->updateContest($request);
         if (!$params) {
             abort(500);
         }

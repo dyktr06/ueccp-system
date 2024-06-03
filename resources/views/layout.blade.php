@@ -38,6 +38,7 @@
                 <div class="offcanvas-body justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item"><a href="{{ url('') }}" class="nav-link">コンテスト一覧</a></li>
+                        <li class="nav-item"><a href="{{ url('ranking') }}" class="nav-link">ランキング</a></li>
                         <!-- Authentication Links -->
                         @guest
                             <li class="nav-item">
