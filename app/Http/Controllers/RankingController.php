@@ -15,7 +15,11 @@ class RankingController extends Controller
 
     public function show()
     {
-        $contests = DB::table('contests')->orderBy('info->start_epoch_second', 'desc')->take(5)->get();
+        $contests = DB::table('contests')
+            ->orderBy('info->start_epoch_second', 'desc')
+            ->take(5)
+            ->get();
+
         return view('ranking.show', [
             'season_ranking' => $this->seasonRankingService->getSeasonRanking($contests),
         ]);

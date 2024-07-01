@@ -31,16 +31,15 @@ class ContestsController extends Controller
 
     public function index()
     {
-        $contests = Contest::orderBy('info->start_epoch_second', 'desc')->paginate(10);
+        $contests = Contest::orderBy('info->start_epoch_second', 'desc')
+            ->paginate(10);
 
         return view('contests.index', ['contests' => $contests]);
     }
 
     public function create()
     {
-        if (!$this->isAccessible()) {
-            abort(404);
-        }
+        abort_if(!$this->isAccessible(), 404);
         return view('contests.create');
     }
 
@@ -63,9 +62,7 @@ class ContestsController extends Controller
     public function update($id, ContestRequest $request)
     {
         $params = $this->updateContestService->updateContest($request);
-        if (!$params) {
-            abort(500);
-        }
+        abort_if(!$params, 500);
         $contest = Contest::findOrFail($id);
         $contest->fill($params)->save();
 
@@ -74,9 +71,7 @@ class ContestsController extends Controller
 
     public function destroy($id)
     {
-        if (!$this->isAccessible()) {
-            abort(404);
-        }
+        abort_if(!$this->isAccessible(), 404);
 
         $contest = Contest::findOrFail($id);
         DB::transaction(function () use ($contest) {

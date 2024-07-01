@@ -21,10 +21,10 @@
                 var rankChart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: @json($dates),
+                        labels: @json($contest_dates),
                         datasets: [{
                             label: '順位',
-                            data: @json($ranks),
+                            data: @json($contest_ranks),
                             borderColor: 'rgba(75, 192, 192, 1)',
                             backgroundColor: 'rgba(75, 192, 192, 0.2)',
                             fill: false,
@@ -79,7 +79,7 @@
                     }
                 });
             </script>
-            @if (!empty($contest_titles))
+            @if (!empty($contest_ids))
                 <h2 class="h5">
                     過去の成績表
                 </h2>
@@ -91,10 +91,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for ($i = 0; $i < count($contest_titles); $i++)
+                        @for ($i = 0; $i < count($contest_ids); $i++)
                             <tr>
-                                <td>{{ $contest_titles[$i] }}</td>
-                                <td>{{ $ranks[$i] }}</td>
+                                <td><a class="text-decoration-none"
+                                    href="{{ route('contests.show', ['contest' => $contest_ids[$i]]) }}">
+                                    {{ $contest_titles[$i] }}
+                                </a></td>
+                                <td>{{ $contest_ranks[$i] }}</td>
                             </tr>
                         @endfor
                     </tbody>
