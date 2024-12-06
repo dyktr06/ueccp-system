@@ -61,6 +61,7 @@
                             <th>順位</th>
                             <th>ユーザー名</th>
                             <th>得点</th>
+                            <th>ペナルティ</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -72,6 +73,7 @@
                                         {{ $standing['user_id'] }}
                                     </a></td>
                                 <td>{{ $standing['points'] }}</td>
+                                <td>{{ gmdate('H:i:s', $standing['penalty']) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
